@@ -23,6 +23,7 @@ from django.utils.http import urlquote
 
 from guardian.compat import get_user_model
 from guardian.conf import settings as guardian_settings
+from guardian.ctypes import get_ctype_from_polymorphic
 from guardian.exceptions import NotUserNorGroup
 
 from django.contrib.auth.views import redirect_to_login
@@ -149,7 +150,7 @@ def clean_orphan_obj_perms():
 def get_obj_perms_model(obj, base_cls, generic_cls):
     if isinstance(obj, Model):
         obj = obj.__class__
-    ctype = ContentType.objects.get_for_model(obj)
+    ctype = get_ctype_from_polymorphic(obj)
 
     if django.VERSION >= (1, 8):
         fields = (f for f in obj._meta.get_fields()
@@ -169,7 +170,7 @@ def get_obj_perms_model(obj, base_cls, generic_cls):
                 # make sure that content_object's content_type is same as
                 # the one of given obj
                 fk = model._meta.get_field('content_object')
-                if ctype == ContentType.objects.get_for_model(fk.rel.to):
+                if ctype == get_ctype_from_polymorphic(fk.rel.to):
                     return model
     return generic_cls
 
