@@ -1,30 +1,22 @@
-import django
 import os
 import sys
-
 from django.conf import global_settings
+import environ
+
+env = environ.Env()
 
 abspath = lambda *p: os.path.abspath(os.path.join(*p))
+
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 SECRET_KEY = 'CHANGE_THIS_TO_SOMETHING_UNIQUE_AND_SECURE'
 
-TEST_SOUTH = 'GUARDIAN_TEST_SOUTH' in os.environ
-
 PROJECT_ROOT = abspath(os.path.dirname(__file__))
 GUARDIAN_MODULE_PATH = abspath(PROJECT_ROOT, '..')
 sys.path.insert(0, GUARDIAN_MODULE_PATH)
-sys.path.insert(0, PROJECT_ROOT)
 
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': abspath(PROJECT_ROOT, '.hidden.db'),
-        'TEST_NAME': ':memory:',
-    },
-}
+DATABASES = {'default': env.db(default="sqlite:///")}
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -33,25 +25,12 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
     'guardian',
-    'guardian.testapp',
     'posts',
     'core',
-    'integration_tests',
+    'django.contrib.staticfiles',
 )
-if django.VERSION < (1, 3):
-    INSTALLED_APPS += ('staticfiles',)
-else:
-    INSTALLED_APPS += ('django.contrib.staticfiles',)
 
-if 'GUARDIAN_NO_TESTS_APP' in os.environ:
-    _apps = list(INSTALLED_APPS)
-    _apps.remove('guardian.testapp')
-    INSTALLED_APPS = tuple(_apps)
-
-if TEST_SOUTH:
-    INSTALLED_APPS += ('south',)
 if 'GRAPPELLI' in os.environ:
     try:
         __import__('grappelli')
@@ -65,28 +44,30 @@ try:
 except ImportError:
     pass
 
-#MIDDLEWARE_CLASSES = (
-    #'django.middleware.common.CommonMiddleware',
-    #'django.contrib.sessions.middleware.SessionMiddleware',
-    #'django.middleware.csrf.CsrfViewMiddleware',
-    #'django.contrib.auth.middleware.AuthenticationMiddleware',
-    #'django.contrib.messages.middleware.MessageMiddleware',
-    #'django.middleware.transaction.TransactionMiddleware',
-#)
+MIDDLEWARE_CLASSES = (
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+)
 
 STATIC_ROOT = abspath(PROJECT_ROOT, '..', 'public', 'static')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [abspath(PROJECT_ROOT, 'static')]
-MEDIA_ROOT = abspath(PROJECT_ROOT, 'media')
-MEDIA_URL = '/media/'
-ADMIN_MEDIA_PREFIX = STATIC_URL + 'grappelli/'
+GUARDIAN_RAISE_403 = True
 
-ROOT_URLCONF = 'example_project.urls'
+ROOT_URLCONF = 'urls'
 
-TEMPLATE_CONTEXT_PROCESSORS = global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-    'django.core.context_processors.request',
-    'example_project.context_processors.version',
-    'django.core.context_processors.static',
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'context_processors.version',
+    "django.contrib.auth.context_processors.auth",
+    "django.template.context_processors.debug",
+    "django.template.context_processors.i18n",
+    "django.template.context_processors.media",
+    "django.template.context_processors.static",
+    "django.template.context_processors.tz",
+    "django.contrib.messages.context_processors.messages"
 )
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
@@ -104,7 +85,7 @@ USE_L10N = True
 
 LOGIN_REDIRECT_URL = '/'
 
-TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner'
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
@@ -119,14 +100,4 @@ PASSWORD_HASHERS = (
     'django.contrib.auth.hashers.SHA1PasswordHasher',
 )
 
-# Neede as some models (located at guardian/tests/models.py)
-# are not migrated for tests
-SOUTH_TESTS_MIGRATE = TEST_SOUTH
-
 AUTH_USER_MODEL = 'core.CustomUser'
-
-try:
-    from conf.localsettings import *
-except ImportError:
-    pass
-

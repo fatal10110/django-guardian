@@ -1,15 +1,16 @@
 import os
 import random
 import string
-import django
+import environ
+
+env = environ.Env()
 
 DEBUG = False
 
 ANONYMOUS_USER_ID = -1
 
-if django.VERSION >= (1, 5):
-    AUTH_USER_MODEL = "testapp.CustomUser"
-    GUARDIAN_MONKEY_PATCH = False
+AUTH_USER_MODEL = "testapp.CustomUser"
+GUARDIAN_MONKEY_PATCH = False
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -35,15 +36,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 )
 
-TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner'
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
-        'TEST_NAME': ':memory:',
-    },
-}
+TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
 ROOT_URLCONF = 'guardian.testapp.tests.urls'
 SITE_ID = 1
@@ -56,15 +49,4 @@ SECRET_KEY = ''.join([random.choice(string.ascii_letters) for x in range(40)])
 
 # Database specific
 
-if os.environ.get('GUARDIAN_TEST_DB_BACKEND') == 'mysql':
-    DATABASES['default']['ENGINE'] = 'django.db.backends.mysql'
-    DATABASES['default']['NAME'] = 'guardian_test'
-    DATABASES['default']['TEST_NAME'] = 'guardian_test'
-    DATABASES['default']['USER'] = os.environ.get('USER', 'root')
-
-if os.environ.get('GUARDIAN_TEST_DB_BACKEND') == 'postgresql':
-    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
-    DATABASES['default']['NAME'] = 'guardian'
-    DATABASES['default']['TEST_NAME'] = 'guardian_test'
-    DATABASES['default']['USER'] = os.environ.get('USER', 'postgres')
-
+DATABASES = {'default': env.db(default="sqlite:///")}

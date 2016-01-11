@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 import os
 import logging
 from itertools import chain
+import django
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.models import AnonymousUser, Group
@@ -149,15 +150,25 @@ def get_obj_perms_model(obj, base_cls, generic_cls):
     if isinstance(obj, Model):
         obj = obj.__class__
     ctype = ContentType.objects.get_for_model(obj)
-    for attr in obj._meta.get_all_related_objects():
-        model = getattr(attr, 'model', None)
+
+    if django.VERSION >= (1, 8):
+        fields = (f for f in obj._meta.get_fields()
+                  if (f.one_to_many or f.one_to_one) and f.auto_created)
+    else:
+        fields = obj._meta.get_all_related_objects()
+
+    for attr in fields:
+        if django.VERSION < (1, 8):
+            model = getattr(attr, 'model', None)
+        else:
+            model = getattr(attr, 'related_model', None)
         if (model and issubclass(model, base_cls) and
                 model is not generic_cls):
             # if model is generic one it would be returned anyway
             if not model.objects.is_generic():
                 # make sure that content_object's content_type is same as
                 # the one of given obj
-                fk = model._meta.get_field_by_name('content_object')[0]
+                fk = model._meta.get_field('content_object')
                 if ctype == ContentType.objects.get_for_model(fk.rel.to):
                     return model
     return generic_cls

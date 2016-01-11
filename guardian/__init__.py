@@ -1,11 +1,13 @@
 """
-Implementation of per object permissions for Django 1.2 or later.
+Implementation of per object permissions for Django.
 """
 from __future__ import unicode_literals
+from . import checks
 
-VERSION = (1, 2, 6, 'dev')
+VERSION = (1, 4, 1)
 
 __version__ = '.'.join((str(each) for each in VERSION[:4]))
+
 
 def get_version():
     """
@@ -25,7 +27,6 @@ def monkey_patch_user():
     # Prototype User and Group methods
     setattr(User, 'get_anonymous', staticmethod(lambda: get_anonymous_user()))
     setattr(User, 'add_obj_perm',
-        lambda self, perm, obj: UserObjectPermission.objects.assign_perm(perm, self, obj))
+            lambda self, perm, obj: UserObjectPermission.objects.assign_perm(perm, self, obj))
     setattr(User, 'del_obj_perm',
-        lambda self, perm, obj: UserObjectPermission.objects.remove_perm(perm, self, obj))
-
+            lambda self, perm, obj: UserObjectPermission.objects.remove_perm(perm, self, obj))

@@ -3,16 +3,15 @@ import sys
 from setuptools import setup, find_packages
 from extras import RunFlakesCommand
 
-guardian = __import__('guardian')
-readme_file = os.path.join(os.path.dirname(__file__), 'README.rst')
-try:
-    long_description = open(readme_file).read()
-except IOError as err:
-    sys.stderr.write("[ERROR] Cannot find file specified as "
-        "``long_description`` (%s)\n" % readme_file)
-    sys.exit(1)
+version_file = os.path.join(os.path.dirname(__file__), 'VERSION.txt')
+with open(version_file, 'r') as f:
+    version = f.readline().strip()
 
-tests_require = ['mock']
+readme_file = os.path.join(os.path.dirname(__file__), 'README.rst')
+with open(version_file, 'r') as f:
+    long_description = f.readline().strip()
+
+tests_require = ['mock', 'django-environ']
 
 extra_kwargs = {}
 if sys.version_info >= (3,):
@@ -22,19 +21,19 @@ elif sys.version_info < (2, 7):
 
 setup(
     name = 'django-guardian',
-    version = guardian.get_version(),
-    url = 'http://github.com/lukaszb/django-guardian',
+    version = version,
+    url = 'http://github.com/django-guardian/django-guardian',
     author = 'Lukasz Balcerzak',
     author_email = 'lukaszbalcerzak@gmail.com',
-    download_url='https://github.com/lukaszb/django-guardian/tags',
-    description = guardian.__doc__.strip(),
+    download_url='https://github.com/django-guardian/django-guardian/tags',
+    description ="Implementation of per object permissions for Django.",
     long_description = long_description,
     zip_safe = False,
     packages = find_packages(),
     include_package_data = True,
     license = 'BSD',
     install_requires = [
-        'Django',
+        'Django >= 1.7',
         'six',
     ],
     tests_require=tests_require,
@@ -46,8 +45,10 @@ setup(
                    'Operating System :: OS Independent',
                    'Programming Language :: Python',
                    'Topic :: Security',
-                   'Programming Language :: Python :: 2',
-                   'Programming Language :: Python :: 3',
+                   'Programming Language :: Python :: 2.7',
+                   'Programming Language :: Python :: 3.3',
+                   'Programming Language :: Python :: 3.4',
+                   'Programming Language :: Python :: 3.5',
     ],
     test_suite='tests.main',
     cmdclass={'flakes': RunFlakesCommand},
