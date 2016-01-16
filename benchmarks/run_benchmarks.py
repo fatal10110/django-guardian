@@ -9,6 +9,8 @@ import random
 import string
 import sys
 
+from guardian.ctypes import get_ctype_from_polymorphic
+
 abspath = lambda *p: os.path.abspath(os.path.join(*p))
 
 THIS_DIR = abspath(os.path.dirname(__file__))
@@ -144,7 +146,7 @@ class Benchmark(object):
 
     @Timed("Get objects")
     def get_objects(self):
-        ctype = ContentType.objects.get_for_model(self.Model)
+        ctype = get_ctype_from_polymorphic(self.Model)
         ids = range(1, self.users_count)
         for user in User.objects.iterator():
             for x in xrange(self.objects_with_perms_count):
