@@ -8,7 +8,9 @@ from guardian.models import Permission
 from guardian.ctypes import get_ctype_from_polymorphic
 import warnings
 
-# TODO: consolidate UserObjectPermissionManager and GroupObjectPermissionManager
+# TODO: consolidate UserObjectPermissionManager and
+# GroupObjectPermissionManager
+
 
 class BaseObjectPermissionManager(models.Manager):
 
@@ -30,9 +32,7 @@ class UserObjectPermissionManager(BaseObjectPermissionManager):
         if getattr(obj, 'pk', None) is None:
             raise ObjectNotPersisted("Object %s needs to be persisted first"
                 % obj)
-        
         ctype = get_ctype_from_polymorphic(obj)
-
         permission = Permission.objects.get(content_type=ctype, codename=perm)
 
         kwargs = {'permission': permission, 'user': user}
@@ -59,7 +59,7 @@ class UserObjectPermissionManager(BaseObjectPermissionManager):
         """
         if getattr(obj, 'pk', None) is None:
             raise ObjectNotPersisted("Object %s needs to be persisted first"
-                % obj)
+                                     % obj)
         filters = {
             'permission__codename': perm,
             'permission__content_type': get_ctype_from_polymorphic(obj),
@@ -105,7 +105,7 @@ class GroupObjectPermissionManager(BaseObjectPermissionManager):
         """
         if getattr(obj, 'pk', None) is None:
             raise ObjectNotPersisted("Object %s needs to be persisted first"
-                % obj)
+                                     % obj)
         filters = {
             'permission__codename': perm,
             'permission__content_type': get_ctype_from_polymorphic(obj),

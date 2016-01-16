@@ -23,6 +23,7 @@ from guardian.utils import get_identity
 from guardian.utils import get_user_obj_perms_model
 import warnings
 
+
 def assign_perm(perm, user_or_group, obj=None):
     """
     Assigns permission to user/group and object pair.
@@ -77,9 +78,9 @@ def assign_perm(perm, user_or_group, obj=None):
             app_label, codename = perm.split('.', 1)
         except ValueError:
             raise ValueError("For global permissions, first argument must be in"
-                " format: 'app_label.codename' (is %r)" % perm)
+                             " format: 'app_label.codename' (is %r)" % perm)
         perm = Permission.objects.get(content_type__app_label=app_label,
-            codename=codename)
+                                      codename=codename)
         if user:
             user.user_permissions.add(perm)
             return perm
@@ -94,10 +95,12 @@ def assign_perm(perm, user_or_group, obj=None):
         model = get_group_obj_perms_model(obj)
         return model.objects.assign_perm(perm, group, obj)
 
+
 def assign(perm, user_or_group, obj=None):
     """ Depreciated function name left in for compatibility"""
     warnings.warn("Shortcut function 'assign' is being renamed to 'assign_perm'. Update your code accordingly as old name will be depreciated in 2.0 version.", DeprecationWarning)
     return assign_perm(perm, user_or_group, obj)
+
 
 def remove_perm(perm, user_or_group=None, obj=None):
     """
@@ -121,9 +124,9 @@ def remove_perm(perm, user_or_group=None, obj=None):
             app_label, codename = perm.split('.', 1)
         except ValueError:
             raise ValueError("For global permissions, first argument must be in"
-                " format: 'app_label.codename' (is %r)" % perm)
+                             " format: 'app_label.codename' (is %r)" % perm)
         perm = Permission.objects.get(content_type__app_label=app_label,
-            codename=codename)
+                                      codename=codename)
         if user:
             user.user_permissions.remove(perm)
             return
@@ -138,6 +141,7 @@ def remove_perm(perm, user_or_group=None, obj=None):
         model = get_group_obj_perms_model(obj)
         model.objects.remove_perm(perm, group, obj)
 
+
 def get_perms(user_or_group, obj):
     """
     Returns permissions for given user/group and object pair, as list of
@@ -145,6 +149,7 @@ def get_perms(user_or_group, obj):
     """
     check = ObjectPermissionChecker(user_or_group)
     return check.get_perms(obj)
+
 
 def get_perms_for_model(cls):
     """
@@ -159,8 +164,9 @@ def get_perms_for_model(cls):
     ctype = get_ctype_from_polymorphic(model)
     return Permission.objects.filter(content_type=ctype)
 
+
 def get_users_with_perms(obj, attach_perms=False, with_superusers=False,
-        with_group_users=True):
+                         with_group_users=True):
     """
     Returns queryset of all ``User`` objects with *any* object permissions for
     the given ``obj``.
@@ -229,9 +235,10 @@ def get_users_with_perms(obj, attach_perms=False, with_superusers=False,
         # TODO: Do not hit db for each user!
         users = {}
         for user in get_users_with_perms(obj,
-                with_group_users=with_group_users):
+                                         with_group_users=with_group_users):
             users[user] = sorted(get_perms(user, obj))
         return users
+
 
 def get_groups_with_perms(obj, attach_perms=False):
     """
@@ -280,13 +287,13 @@ def get_groups_with_perms(obj, attach_perms=False):
         # TODO: Do not hit db for each group!
         groups = {}
         for group in get_groups_with_perms(obj):
-            if not group in groups:
+            if group not in groups:
                 groups[group] = sorted(get_perms(group, obj))
         return groups
 
 
 def get_objects_for_user(user, perms, klass=None, use_groups=True, any_perm=False,
-        with_superuser=True, accept_global_perms=True):
+                         with_superuser=True, accept_global_perms=True):
     """
     Returns queryset of objects for which a given ``user`` has *all*
     permissions present at ``perms``.
@@ -401,7 +408,7 @@ def get_objects_for_user(user, perms, klass=None, use_groups=True, any_perm=Fals
             new_app_label, codename = perm.split('.', 1)
             if app_label is not None and app_label != new_app_label:
                 raise MixedContentTypeError("Given perms must have same app "
-                    "label (%s != %s)" % (app_label, new_app_label))
+                                            "label (%s != %s)" % (app_label, new_app_label))
             else:
                 app_label = new_app_label
         else:
@@ -409,10 +416,10 @@ def get_objects_for_user(user, perms, klass=None, use_groups=True, any_perm=Fals
         codenames.add(codename)
         if app_label is not None:
             new_ctype = ContentType.objects.get(app_label=app_label,
-                permission__codename=codename)
+                                                permission__codename=codename)
             if ctype is not None and ctype != new_ctype:
                 raise MixedContentTypeError("ContentType was once computed "
-                    "to be %s and another one %s" % (ctype, new_ctype))
+                                            "to be %s and another one %s" % (ctype, new_ctype))
             else:
                 ctype = new_ctype
 
@@ -428,7 +435,7 @@ def get_objects_for_user(user, perms, klass=None, use_groups=True, any_perm=Fals
         queryset = _get_queryset(klass)
         if ctype.model_class() != queryset.model:
             raise MixedContentTypeError("Content type for given perms and "
-                "klass differs")
+                                        "klass differs")
 
     # At this point, we should have both ctype and queryset and they should
     # match which means: ctype.model_class() == queryset.model
@@ -453,7 +460,7 @@ def get_objects_for_user(user, perms, klass=None, use_groups=True, any_perm=Fals
                 global_perms.add(code)
         for code in global_perms:
             codenames.remove(code)
-        ## prerequisite: there must be elements in global_perms otherwise just follow the procedure for
+        # prerequisite: there must be elements in global_perms otherwise just follow the procedure for
         # object based permissions only AND
         # 1. codenames is empty, which means that permissions are ONLY set globally, therefore return the full queryset.
         # OR
@@ -473,10 +480,11 @@ def get_objects_for_user(user, perms, klass=None, use_groups=True, any_perm=Fals
     # Now we should extract list of pk values for which we would filter queryset
     user_model = get_user_obj_perms_model(queryset.model)
     user_obj_perms_queryset = (user_model.objects
-        .filter(user=user)
-        .filter(permission__content_type=ctype))
+                               .filter(user=user)
+                               .filter(permission__content_type=ctype))
     if len(codenames):
-        user_obj_perms_queryset = user_obj_perms_queryset.filter(permission__codename__in=codenames)
+        user_obj_perms_queryset = user_obj_perms_queryset.filter(
+            permission__codename__in=codenames)
     if user_model.objects.is_generic():
         fields = ['object_pk', 'permission__codename']
     else:
@@ -501,7 +509,8 @@ def get_objects_for_user(user, perms, klass=None, use_groups=True, any_perm=Fals
             user_obj_perms = user_obj_perms_queryset.values_list(*fields)
             groups_obj_perms = groups_obj_perms_queryset.values_list(*fields)
             data = list(user_obj_perms) + list(groups_obj_perms)
-            keyfunc = lambda t: t[0] # sorting/grouping by pk (first in result tuple)
+            # sorting/grouping by pk (first in result tuple)
+            keyfunc = lambda t: t[0]
             data = sorted(data, key=keyfunc)
             pk_list = []
             for pk, group in groupby(data, keyfunc):
@@ -512,8 +521,10 @@ def get_objects_for_user(user, perms, klass=None, use_groups=True, any_perm=Fals
             return objects
 
     if not any_perm and len(codenames) > 1:
-        counts = user_obj_perms_queryset.values(fields[0]).annotate(object_pk_count=Count(fields[0]))
-        user_obj_perms_queryset = counts.filter(object_pk_count__gte=len(codenames))
+        counts = user_obj_perms_queryset.values(
+            fields[0]).annotate(object_pk_count=Count(fields[0]))
+        user_obj_perms_queryset = counts.filter(
+            object_pk_count__gte=len(codenames))
 
     values = user_obj_perms_queryset.values_list(fields[0], flat=True)
     if user_model.objects.is_generic():
@@ -597,7 +608,7 @@ def get_objects_for_group(group, perms, klass=None, any_perm=False, accept_globa
             new_app_label, codename = perm.split('.', 1)
             if app_label is not None and app_label != new_app_label:
                 raise MixedContentTypeError("Given perms must have same app "
-                    "label (%s != %s)" % (app_label, new_app_label))
+                                            "label (%s != %s)" % (app_label, new_app_label))
             else:
                 app_label = new_app_label
         else:
@@ -605,10 +616,10 @@ def get_objects_for_group(group, perms, klass=None, any_perm=False, accept_globa
         codenames.add(codename)
         if app_label is not None:
             new_ctype = ContentType.objects.get(app_label=app_label,
-                permission__codename=codename)
+                                                permission__codename=codename)
             if ctype is not None and ctype != new_ctype:
                 raise MixedContentTypeError("ContentType was once computed "
-                    "to be %s and another one %s" % (ctype, new_ctype))
+                                            "to be %s and another one %s" % (ctype, new_ctype))
             else:
                 ctype = new_ctype
 
@@ -624,7 +635,7 @@ def get_objects_for_group(group, perms, klass=None, any_perm=False, accept_globa
         queryset = _get_queryset(klass)
         if ctype.model_class() != queryset.model:
             raise MixedContentTypeError("Content type for given perms and "
-                "klass differs")
+                                        "klass differs")
 
     # At this point, we should have both ctype and queryset and they should
     # match which means: ctype.model_class() == queryset.model
@@ -641,12 +652,13 @@ def get_objects_for_group(group, perms, klass=None, any_perm=False, accept_globa
         if len(global_perms) > 0 and (len(codenames) == 0 or any_perm):
             return queryset
 
-    # Now we should extract list of pk values for which we would filter queryset
+    # Now we should extract list of pk values for which we would filter
+    # queryset
     group_model = get_group_obj_perms_model(queryset.model)
     groups_obj_perms_queryset = (group_model.objects
-        .filter(group=group)
-        .filter(permission__content_type=ctype)
-        .filter(permission__codename__in=codenames))
+                                 .filter(group=group)
+                                 .filter(permission__content_type=ctype)
+                                 .filter(permission__codename__in=codenames))
     if group_model.objects.is_generic():
         fields = ['object_pk', 'permission__codename']
     else:
@@ -654,7 +666,7 @@ def get_objects_for_group(group, perms, klass=None, any_perm=False, accept_globa
     groups_obj_perms = groups_obj_perms_queryset.values_list(*fields)
     data = list(groups_obj_perms)
 
-    keyfunc = lambda t: t[0] # sorting/grouping by pk (first in result tuple)
+    keyfunc = lambda t: t[0]  # sorting/grouping by pk (first in result tuple)
     data = sorted(data, key=keyfunc)
     pk_list = []
     for pk, group in groupby(data, keyfunc):

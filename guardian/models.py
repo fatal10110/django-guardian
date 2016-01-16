@@ -15,7 +15,6 @@ from django.utils.translation import ugettext_lazy as _
 
 from guardian.compat import user_model_label
 from guardian.compat import unicode
-from guardian.conf import settings
 from guardian.ctypes import get_ctype_from_polymorphic
 from guardian.managers import GroupObjectPermissionManager
 from guardian.managers import UserObjectPermissionManager
@@ -41,8 +40,8 @@ class BaseObjectPermission(models.Model):
         content_type = get_ctype_from_polymorphic(self.content_object)
         if content_type != self.permission.content_type:
             raise ValidationError("Cannot persist permission not designed for "
-                "this class (permission's type is %r and object's type is %r)"
-                % (self.permission.content_type, content_type))
+                                  "this class (permission's type is %r and object's type is %r)"
+                                  % (self.permission.content_type, content_type))
         return super(BaseObjectPermission, self).save(*args, **kwargs)
 
 
@@ -69,6 +68,7 @@ class UserObjectPermissionBase(BaseObjectPermission):
 
 
 class UserObjectPermission(UserObjectPermissionBase, BaseGenericObjectPermission):
+
     class Meta:
         unique_together = ['user', 'permission', 'object_pk']
 
@@ -87,11 +87,12 @@ class GroupObjectPermissionBase(BaseObjectPermission):
 
 
 class GroupObjectPermission(GroupObjectPermissionBase, BaseGenericObjectPermission):
+
     class Meta:
         unique_together = ['group', 'permission', 'object_pk']
 
 
 setattr(Group, 'add_obj_perm',
-    lambda self, perm, obj: GroupObjectPermission.objects.assign_perm(perm, self, obj))
+        lambda self, perm, obj: GroupObjectPermission.objects.assign_perm(perm, self, obj))
 setattr(Group, 'del_obj_perm',
-    lambda self, perm, obj: GroupObjectPermission.objects.remove_perm(perm, self, obj))
+        lambda self, perm, obj: GroupObjectPermission.objects.remove_perm(perm, self, obj))
