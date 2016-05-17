@@ -1,16 +1,16 @@
 from __future__ import unicode_literals
+import warnings
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
-ANONYMOUS_DEFAULT_USERNAME_VALUE = getattr(settings,
-                                           'ANONYMOUS_DEFAULT_USERNAME_VALUE', 'AnonymousUser')
-
 try:
-    ANONYMOUS_USER_ID = settings.ANONYMOUS_USER_ID
+    ANONYMOUS_USER_NAME = settings.ANONYMOUS_USER_NAME
 except AttributeError:
-    raise ImproperlyConfigured("In order to use django-guardian's "
-                               "ObjectPermissionBackend authorization backend you have to configure "
-                               "ANONYMOUS_USER_ID at your settings module")
+    try:
+        ANONYMOUS_USER_NAME = settings.ANONYMOUS_DEFAULT_USERNAME_VALUE
+        warnings.warn("The ANONYMOUS_DEFAULT_USERNAME_VALUE setting has been renamed to ANONYMOUS_USER_NAME.", DeprecationWarning)
+    except AttributeError:
+        ANONYMOUS_USER_NAME = "AnonymousUser"
 
 RENDER_403 = getattr(settings, 'GUARDIAN_RENDER_403', False)
 TEMPLATE_403 = getattr(settings, 'GUARDIAN_TEMPLATE_403', '403.html')

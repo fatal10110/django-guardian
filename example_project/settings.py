@@ -16,7 +16,7 @@ PROJECT_ROOT = abspath(os.path.dirname(__file__))
 GUARDIAN_MODULE_PATH = abspath(PROJECT_ROOT, '..')
 sys.path.insert(0, GUARDIAN_MODULE_PATH)
 
-DATABASES = {'default': env.db(default="sqlite:///")}
+DATABASES = {'default': env.db(default="sqlite://./example.db")}
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -92,7 +92,6 @@ AUTHENTICATION_BACKENDS = (
     'guardian.backends.ObjectPermissionBackend',
 )
 
-ANONYMOUS_USER_ID = -1
 GUARDIAN_GET_INIT_ANONYMOUS_USER = 'core.models.get_custom_anon_user'
 
 PASSWORD_HASHERS = (

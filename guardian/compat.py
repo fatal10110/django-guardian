@@ -7,10 +7,9 @@ from django.contrib.auth.models import Permission
 from django.contrib.auth.models import AnonymousUser
 import six
 import sys
-
 from importlib import import_module
 
-from django.conf.urls import url, patterns, include, handler404, handler500
+from django.conf.urls import url, include, handler404, handler500
 
 __all__ = [
     'User',
@@ -25,24 +24,7 @@ __all__ = [
     'include',
     'handler404',
     'handler500',
-    'mock',
-    'unittest',
 ]
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest  # pyflakes:ignore
-try:
-    from unittest import mock  # Since Python 3.3 mock is is in stdlib
-except ImportError:
-    try:
-        import mock  # pyflakes:ignore
-    except ImportError:
-        # mock is used for tests only however it is hard to check if user is
-        # running tests or production code so we fail silently here; mock is
-        # still required for tests at setup.py (See PR #193)
-        pass
 
 # Django 1.5 compatibility utilities, providing support for custom User models.
 # Since get_user_model() causes a circular import if called when app models are
@@ -146,3 +128,15 @@ def get_model_name(model):
     # model._meta.module_name is deprecated in django version 1.7 and removed
     # in django version 1.8.  It is replaced by model._meta.model_name
     return model._meta.model_name
+
+
+def template_debug_setter(value):
+    if hasattr(settings, 'TEMPLATE_DEBUG'):
+        settings.TEMPLATE_DEBUG = value
+    settings.TEMPLATES[0]['OPTIONS']['DEBUG'] = value
+
+
+def template_debug_getter():
+    if hasattr(settings, 'TEMPLATE_DEBUG'):
+        return settings.TEMPLATE_DEBUG
+    return settings.TEMPLATES[0]['OPTIONS'].get('DEBUG', False)

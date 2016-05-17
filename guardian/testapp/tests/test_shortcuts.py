@@ -13,6 +13,8 @@ from guardian.shortcuts import assign
 from guardian.shortcuts import assign_perm
 from guardian.shortcuts import remove_perm
 from guardian.shortcuts import get_perms
+from guardian.shortcuts import get_user_perms
+from guardian.shortcuts import get_group_perms
 from guardian.shortcuts import get_users_with_perms
 from guardian.shortcuts import get_groups_with_perms
 from guardian.shortcuts import get_objects_for_user
@@ -313,6 +315,56 @@ class GetUsersWithPermsTest(TestCase):
         result = get_users_with_perms(self.obj1, with_group_users=False,
                                       attach_perms=True)
         expected = {self.user2: ["change_contenttype"]}
+        self.assertEqual(result, expected)
+
+    def test_direct_perms_only(self):
+        admin = User.objects.create(username='admin', is_superuser=True)
+        self.user1.groups.add(self.group1)
+        self.user2.groups.add(self.group1)
+        assign_perm("change_contenttype", self.user1, self.obj1)
+        assign_perm("delete_contenttype", admin, self.obj1)
+        assign_perm("delete_contenttype", self.group1, self.obj1)
+        expected = set([self.user1, self.user2, admin])
+        result = get_users_with_perms(self.obj1, with_superusers=False, with_group_users=True)
+        self.assertEqual(set(result), expected)
+        self.assertEqual(set(get_user_perms(self.user1, self.obj1)), set(['change_contenttype']))
+        self.assertEqual(set(get_user_perms(self.user2, self.obj1)), set([]))
+        self.assertEqual(set(get_user_perms(admin, self.obj1)), set(['delete_contenttype']))
+        result = get_users_with_perms(self.obj1, with_superusers=False, with_group_users=False)
+        expected = set([self.user1, admin])
+        self.assertEqual(set(result), expected)
+        self.assertEqual(set(get_group_perms(self.user1, self.obj1)), set(['delete_contenttype']))
+        self.assertEqual(set(get_group_perms(self.user2, self.obj1)), set(['delete_contenttype']))
+        self.assertEqual(set(get_group_perms(self.group1, self.obj1)), set(['delete_contenttype']))
+        self.assertEqual(set(get_group_perms(self.group2, self.obj1)), set([]))
+        self.assertEqual(set(get_group_perms(admin, self.obj1)), set([]))
+        self.assertEqual(set(get_perms(admin, self.obj1)), set(['add_contenttype', 'change_contenttype', 'delete_contenttype']))
+        self.assertEqual(set(get_perms(self.user1, self.obj1)), set(['change_contenttype', 'delete_contenttype']))
+        self.assertEqual(set(get_perms(self.user2, self.obj1)), set(['delete_contenttype']))
+        self.assertEqual(set(get_perms(self.group1, self.obj1)), set(['delete_contenttype']))
+        self.assertEqual(set(get_perms(self.group2, self.obj1)), set([]))
+
+    def test_direct_perms_only_perms_attached(self):
+        admin = User.objects.create(username='admin', is_superuser=True)
+        self.user1.groups.add(self.group1)
+        self.user2.groups.add(self.group1)
+        assign_perm("change_contenttype", self.user1, self.obj1)
+        assign_perm("delete_contenttype", admin, self.obj1)
+        assign_perm("delete_contenttype", self.group1, self.obj1)
+        expected = {
+            self.user1: ["change_contenttype", "delete_contenttype"],
+            admin: ["add_contenttype", "change_contenttype", "delete_contenttype"],
+            self.user2: ["delete_contenttype"]
+        }
+        result = get_users_with_perms(self.obj1, attach_perms=True,
+            with_superusers=False, with_group_users=True)
+        self.assertEqual(result.keys(), expected.keys())
+        for key, perms in result.items():
+            self.assertEqual(set(perms), set(expected[key]))
+        result = get_users_with_perms(self.obj1, attach_perms=True,
+            with_superusers=False, with_group_users=False)
+        expected = {self.user1: ["change_contenttype"],
+                    admin: ["delete_contenttype"]}
         self.assertEqual(result, expected)
 
     def test_without_group_users_no_result(self):
@@ -787,6 +839,7 @@ class GetObjectsForUser(TestCase):
                           self.user, ['auth.change_permission', 'auth.change_group'])
 
     def test_has_any_permissions(self):
+        # We use groups as objects.
         group_names = ['group1', 'group2', 'group3']
         groups = [Group.objects.create(name=name) for name in group_names]
         for group in groups:
@@ -805,6 +858,20 @@ class GetObjectsForUser(TestCase):
         objects = get_objects_for_user(self.user,
                                        ['change_contenttype'], ContentType)
         self.assertEqual([obj.name for obj in objects], [self.ctype.name])
+
+    def test_has_any_group_permissions(self):
+        # We use groups as objects.
+        group_names = ['group1', 'group2', 'group3']
+        groups = [Group.objects.create(name=name) for name in group_names]
+        for group in groups:
+            assign_perm('change_group', self.group, group)
+
+        objects = get_objects_for_group(self.group, [], Group)
+        self.assertEqual(len(objects), len(groups))
+        self.assertTrue(isinstance(objects, QuerySet))
+        self.assertEqual(
+            set(objects),
+            set(groups))
 
 
 class GetObjectsForGroup(TestCase):

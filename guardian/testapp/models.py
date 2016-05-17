@@ -3,6 +3,7 @@ from datetime import datetime
 
 from django.db import models
 from django.contrib.admin.models import LogEntry
+from django.contrib.auth.models import AbstractUser, AbstractBaseUser
 
 from guardian.mixins import GuardianUserMixin
 from guardian.models import UserObjectPermissionBase
@@ -59,6 +60,21 @@ class Mixed(models.Model):
         return self.name
 
 
+class ReverseMixedUserObjectPermission(UserObjectPermissionBase):
+    content_object = models.ForeignKey('ReverseMixed')
+
+
+class ReverseMixed(models.Model):
+    """
+    Model for tests obj perms checks with generic group object permissions model
+    and generic group object permissions model.
+    """
+    name = models.CharField(max_length=128, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
 class LogEntryWithGroup(LogEntry):
     group = models.ForeignKey('auth.Group', null=True, blank=True)
 
@@ -71,8 +87,16 @@ class NonIntPKModel(models.Model):
     char_pk = models.CharField(primary_key=True, max_length=128)
 
 
-from django.contrib.auth.models import AbstractUser
-
-
 class CustomUser(AbstractUser, GuardianUserMixin):
     custom_id = models.AutoField(primary_key=True)
+
+
+class CustomUsernameUser(AbstractBaseUser, GuardianUserMixin):
+    email = models.EmailField(max_length=100, unique=True)
+    USERNAME_FIELD = 'email'
+
+    def get_full_name(self):
+        return self.email
+
+    def get_short_name(self):
+        return self.email

@@ -4,16 +4,19 @@ Implementation of per object permissions for Django.
 from __future__ import unicode_literals
 from . import checks
 
-VERSION = (1, 4, 1)
 
-__version__ = '.'.join((str(each) for each in VERSION[:4]))
+try:
+    from .version import version as __version__
+    __version__split__ = __version__.split(".")
+    VERSION = tuple([int(each) for each in __version__split__[:3]] + __version__split__[3:])
 
-
-def get_version():
-    """
-    Returns shorter version (digit parts only) as string.
-    """
-    return '.'.join((str(each) for each in VERSION[:4]))
+    def get_version():
+        """
+        Returns shorter version (digit parts only) as string.
+        """
+        return '.'.join((str(each) for each in VERSION[:3]))
+except ImportError:
+    pass
 
 
 default_app_config = 'guardian.apps.GuardianConfig'

@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import django
 from django import forms
 from django.conf import settings
 from guardian.compat import url
@@ -14,7 +15,8 @@ from django.utils.translation import ugettext, ugettext_lazy as _
 from guardian.compat import OrderedDict, get_user_model, get_model_name
 from guardian.forms import UserObjectPermissionsForm
 from guardian.forms import GroupObjectPermissionsForm
-from guardian.shortcuts import get_perms
+from guardian.shortcuts import get_user_perms
+from guardian.shortcuts import get_group_perms
 from guardian.shortcuts import get_users_with_perms
 from guardian.shortcuts import get_groups_with_perms
 from guardian.shortcuts import get_perms_for_model
@@ -119,9 +121,14 @@ class GuardedModelAdminMixin(object):
     def get_obj_perms_base_context(self, request, obj):
         """
         Returns context dictionary with common admin and object permissions
-        related content.
+        related content. It uses AdminSite.each_context (available in Django >= 1.8,
+        making sure all required template vars are in the context.
         """
-        context = {
+        if django.VERSION >= (1, 8):
+            context = self.admin_site.each_context(request)
+        else:
+            context = {}
+        context.update( {
             'adminform': {'model_admin': self},
             'media': self.media,
             'object': obj,
@@ -131,7 +138,7 @@ class GuardedModelAdminMixin(object):
             'has_change_permission': self.has_change_permission(request, obj),
             'model_perms': get_perms_for_model(obj),
             'title': _("Object permissions"),
-        }
+        })
         return context
 
     def obj_perms_manage_view(self, request, object_pk):
@@ -259,7 +266,7 @@ class GuardedModelAdminMixin(object):
 
         context = self.get_obj_perms_base_context(request, obj)
         context['user_obj'] = user
-        context['user_perms'] = get_perms(user, obj)
+        context['user_perms'] = get_user_perms(user, obj)
         context['form'] = form
 
         request.current_app = self.admin_site.name
@@ -317,7 +324,7 @@ class GuardedModelAdminMixin(object):
 
         context = self.get_obj_perms_base_context(request, obj)
         context['group_obj'] = group
-        context['group_perms'] = get_perms(group, obj)
+        context['group_perms'] = get_group_perms(group, obj)
         context['form'] = form
 
         request.current_app = self.admin_site.name
